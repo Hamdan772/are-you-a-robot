@@ -15,7 +15,6 @@ Open the link, check the box, and follow the instructions. Mostly.
 - A five-heart verification health bar that loses health on wrong answers
 - A full game-over scene when the verification system asks you to leave
 - Local progress and health persistence with no account or backend
-- A secret Konami-code skip button
 - A copyable provisional humanity certificate for anyone who survives
 
 ## Run Locally
