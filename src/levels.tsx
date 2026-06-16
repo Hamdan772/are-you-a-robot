@@ -422,6 +422,81 @@ function Level15({ complete }: LevelProps) {
   )
 }
 
+// Level 15B — Parallel parking
+function Level15B({ complete, reject }: LevelProps) {
+  const [pos, setPos] = useState({ x: 1, y: 3 })
+  const [angle, setAngle] = useState(0)
+  const posRef = useRef(pos)
+  const done = useRef(false)
+  const parked = pos.x === 3 && pos.y === 1 && angle === 90
+  const blockers = new Set([2, 5, 7, 10])
+  const move = (x: number, y: number) => {
+    const nextAngle = x === 1 ? 90 : x === -1 ? -90 : y === 1 ? 180 : 0
+    setAngle(nextAngle)
+    const p = posRef.current
+    const n = { x: Math.max(0, Math.min(5, p.x + x)), y: Math.max(0, Math.min(3, p.y + y)) }
+    const nextIndex = n.y * 6 + n.x
+    if (blockers.has(nextIndex)) {
+      reject('You have bumped a very documented vehicle.')
+      return
+    }
+    posRef.current = n
+    setPos(n)
+    if (n.x === 3 && n.y === 1 && nextAngle === 90 && !done.current) {
+      done.current = true
+      complete()
+    }
+  }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const d: { [k: string]: [number, number] } = {
+        ArrowUp: [0, -1],
+        ArrowDown: [0, 1],
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+      }
+      if (!d[e.key]) return
+      e.preventDefault()
+      move(...d[e.key])
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+  return (
+    <div className="parking-level">
+      <h2>Parallel park between the witness vehicles.</h2>
+      <div className="parallel-lot">
+        {Array.from({ length: 24 }, (_, i) => (
+          <div
+            key={i}
+            className={`${i === 9 ? 'parallel-goal' : ''} ${blockers.has(i) ? 'parked-car' : ''}`}
+          >
+            {pos.x === i % 6 && pos.y === Math.floor(i / 6) ? (
+              <span
+                className="tiny-car sprite-car"
+                style={{ transform: `rotate(${angle}deg)` }}
+              />
+            ) : (
+              ''
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="arrow-pad mobile-only-controls">
+        <button onClick={() => move(0, -1)}>↑</button>
+        <span>
+          <button onClick={() => move(-1, 0)}>←</button>
+          <button onClick={() => move(0, 1)}>↓</button>
+          <button onClick={() => move(1, 0)}>→</button>
+        </span>
+      </div>
+      <button className="link-button" onClick={() => (parked ? complete() : reject('The curb remains unconvinced.'))}>
+        Ask curb inspector
+      </button>
+    </div>
+  )
+}
+
 // Level 16 — Draw a circle
 function Level16({ complete, reject }: LevelProps) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -750,6 +825,41 @@ function Level25({ complete }: LevelProps) {
       <h2>Continue. The button has resigned.</h2>
       <div className="runway" onMouseMove={() => setX(Math.random() * 75)}>
         <button style={{ left: `${x}%` }} onClick={complete}>
+          Continue
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Level 25B — Flashlight search
+function Level25B({ complete }: LevelProps) {
+  const [light, setLight] = useState({ x: 50, y: 50 })
+  const [button] = useState(() => {
+    const seed = Date.now() % 997
+    return {
+      x: 16 + ((seed * 37) % 64),
+      y: 22 + ((seed * 53) % 52),
+    }
+  })
+  return (
+    <div className="prompt-block">
+      <h2>The lights are off. Find Continue.</h2>
+      <div
+        className="flashlight-room"
+        style={{ '--x': `${light.x}%`, '--y': `${light.y}%` } as React.CSSProperties}
+        onPointerMove={event => {
+          const box = event.currentTarget.getBoundingClientRect()
+          setLight({
+            x: ((event.clientX - box.left) / box.width) * 100,
+            y: ((event.clientY - box.top) / box.height) * 100,
+          })
+        }}
+      >
+        <button
+          style={{ left: `${button.x}%`, top: `${button.y}%` }}
+          onClick={complete}
+        >
           Continue
         </button>
       </div>
@@ -1132,6 +1242,7 @@ export const levelRegistry: Entry[] = (
     ['human-error', 'Image inspection', Level13],
     ['duck-recall', 'Visual memory', Level14],
     ['parking', 'Spatial control', Level15],
+    ['parallel-parking', 'Spatial control', Level15B],
     ['draw-circle', 'Gesture analysis', Level16],
     ['agent-grid', 'Reaction', Level17],
     ['sliding-grid', 'Spatial logic', Level18],
@@ -1141,6 +1252,7 @@ export const levelRegistry: Entry[] = (
     ['four-clicks', 'Counting', Level22],
     ['permission', 'Impulse control', Level23],
     ['shy-button', 'Pointer control', Level25],
+    ['flashlight', 'Pointer control', Level25B],
     ['pixel-h', 'Pattern recognition', Level26],
     ['approved-keyboard', 'Identity entry', Level27],
     ['terms', 'Attention', Level28],

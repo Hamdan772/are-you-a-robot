@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { levelRegistry } from './levels'
 import './App.css'
 
-const STORAGE = 'human-verification-progress-v5'
+const STORAGE = 'human-verification-progress-v6'
 const MAX_HEALTH = 5
 const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']
 type Save = { index: number; errors: number; health: number }

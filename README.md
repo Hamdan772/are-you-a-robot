@@ -10,8 +10,8 @@ Open the link, check the box, and follow the instructions. Mostly.
 
 ## Features
 
-- 32 handcrafted verification challenges with unique interaction mechanics
-- Image CAPTCHAs, memory tests, keyboard parking, drawing, timing, and visual puzzles
+- 34 handcrafted verification challenges with unique interaction mechanics
+- Image CAPTCHAs, memory tests, parking puzzles, drawing, timing, and visual puzzles
 - A five-heart verification health bar that loses health on wrong answers
 - A full game-over scene when the verification system asks you to leave
 - Local progress and health persistence with no account or backend
@@ -49,7 +49,7 @@ interactions and game-over animation use React state and CSS.
 
 ```text
 src/App.tsx       Progression, health, persistence, ending, and game-over flow
-src/levels.tsx    The 32 self-contained challenge components
+src/levels.tsx    The 34 self-contained challenge components
 src/App.css       CAPTCHA interface, puzzle styling, and animations
 public/levels/    Photos, illustrations, and puzzle-specific visual assets
 ```
