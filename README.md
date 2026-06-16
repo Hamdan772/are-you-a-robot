@@ -1,34 +1,49 @@
 # Are You a Robot?
 
-A deadpan browser game where a routine CAPTCHA slowly becomes an unreasonable investigation into whether you are human enough.
+A fake CAPTCHA that starts like boring identity verification and slowly becomes a suspicious little internet game.
 
 ![Are You a Robot gameplay](public/readme-hero.png)
 
-## [Play the live game](https://are-you-a-robot-six.vercel.app)
+## Play
 
-Open the link, check the box, and follow the instructions. Mostly.
+**[Launch the live demo](https://are-you-a-robot-six.vercel.app)**
+
+No account, backend, or setup required. Open the page, check the box, and try not to lose all five hearts.
+
+## What You Do
+
+Are You a Robot? is a 34-level browser game inspired by the bureaucratic confidence of CAPTCHA widgets and the playful escalation of Neal.fun-style projects. Each screen asks for one small proof of humanity, but the proofs get less reasonable as the test continues.
 
 ## Features
 
-- 34 handcrafted verification challenges with unique interaction mechanics
-- Image CAPTCHAs, memory tests, parking puzzles, drawing, timing, and visual puzzles
-- A five-heart verification health bar that loses health on wrong answers
-- A full game-over scene when the verification system asks you to leave
-- Local progress and health persistence with no account or backend
-- A copyable provisional humanity certificate for anyone who survives
+- 34 handcrafted mini-games, not a generic quiz template
+- reCAPTCHA-style image selection, timing, memory, drawing, parking, hidden-button, and text puzzles
+- A five-heart health bar that takes damage on every wrong answer
+- A game-over scene where the verification robot points you toward the exit
+- LocalStorage progress, health, and error persistence
+- A final copyable “Provisional Humanity Notice”
+- Secret Konami-code skip button for testing and chaos
 
-## Run Locally
+## Quick Start
 
-Requires Node.js 20 or newer.
+For most people:
+
+```text
+Open https://are-you-a-robot-six.vercel.app
+```
+
+For local development:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`.
+Then open `http://127.0.0.1:5173`.
 
-To verify a production build:
+## Verify Locally
+
+Requires Node.js 20 or newer.
 
 ```bash
 npm run build
@@ -37,31 +52,28 @@ npm run lint
 
 ## How It Works
 
-Each challenge is its own React component rather than a question rendered
-through a shared quiz template. That lets individual levels own their timing,
-pointer behavior, keyboard controls, canvas drawing, and failure conditions.
+The game is built as a collection of self-contained React level components. Each level owns its own interaction model: pointer tracking, keyboard movement, canvas drawing, timers, memory, and puzzle-specific failure logic all live inside the level that needs them.
 
-The app has no backend. Progress, remaining health, and error count are stored
-in `localStorage`. Framer Motion handles screen transitions, while the puzzle
-interactions and game-over animation use React state and CSS.
+The app is frontend-only. Saves are stored in `localStorage`; Vercel serves the static build. Framer Motion handles screen transitions, while the more physical moments, like the health bar, blackout flashlight, and ejection scene, are CSS-driven.
 
 ## Project Structure
 
 ```text
-src/App.tsx       Progression, health, persistence, ending, and game-over flow
-src/levels.tsx    The 34 self-contained challenge components
-src/App.css       CAPTCHA interface, puzzle styling, and animations
-public/levels/    Photos, illustrations, and puzzle-specific visual assets
+src/App.tsx       Progression, health, persistence, certificate, and game-over flow
+src/levels.tsx    The 34 level components and level registry
+src/App.css       CAPTCHA styling, level visuals, and animation work
+public/levels/    Photos, sprites, generated puzzle images, and other assets
 ```
 
 ## Credits
 
 - Built with [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), and [Framer Motion](https://motion.dev/)
-- Inspired by the clean absurdity of [Neal.fun](https://neal.fun/) and the familiar language of CAPTCHA widgets
+- Inspired by [Neal.fun](https://neal.fun/) and the familiar shape of CAPTCHA widgets
 - Traffic, bicycle, bus, hydrant, bench, and duck photos from [LoremFlickr](https://loremflickr.com/)
 - Fruit and chair illustrations from [OpenMoji](https://openmoji.org/)
 - Eye illustration from [Openclipart](https://openclipart.org/)
 - reCAPTCHA-style badge from [Wikimedia Commons](https://commons.wikimedia.org/)
 
-This is a parody project. It is not affiliated with or endorsed by Google,
-reCAPTCHA, Neal.fun, or any department qualified to determine humanity.
+## Disclaimer
+
+This is a parody project. It is not affiliated with Google, reCAPTCHA, Neal.fun, or any department legally authorized to determine whether you are a person.

@@ -834,27 +834,29 @@ function Level25({ complete }: LevelProps) {
 
 // Level 25B — Flashlight search
 function Level25B({ complete }: LevelProps) {
-  const [light, setLight] = useState({ x: 50, y: 50 })
+  const [light, setLight] = useState({ x: 8, y: 8 })
   const [button] = useState(() => {
     const seed = Date.now() % 997
     return {
-      x: 16 + ((seed * 37) % 64),
-      y: 22 + ((seed * 53) % 52),
+      x: 30 + ((seed * 37) % 58),
+      y: 28 + ((seed * 53) % 52),
     }
   })
   return (
-    <div className="prompt-block">
+    <div
+      className="blackout-level"
+      style={{ '--x': `${light.x}%`, '--y': `${light.y}%` } as React.CSSProperties}
+      onPointerMove={event => {
+        const box = event.currentTarget.getBoundingClientRect()
+        setLight({
+          x: ((event.clientX - box.left) / box.width) * 100,
+          y: ((event.clientY - box.top) / box.height) * 100,
+        })
+      }}
+    >
       <h2>The lights are off. Find Continue.</h2>
       <div
         className="flashlight-room"
-        style={{ '--x': `${light.x}%`, '--y': `${light.y}%` } as React.CSSProperties}
-        onPointerMove={event => {
-          const box = event.currentTarget.getBoundingClientRect()
-          setLight({
-            x: ((event.clientX - box.left) / box.width) * 100,
-            y: ((event.clientY - box.top) / box.height) * 100,
-          })
-        }}
       >
         <button
           style={{ left: `${button.x}%`, top: `${button.y}%` }}
