@@ -30,6 +30,7 @@ function App() {
   const [notice, setNotice] = useState('')
   const [verified, setVerified] = useState(false)
   const [konamiEnabled, setKonamiEnabled] = useState(false)
+  const [resumeAvailable, setResumeAvailable] = useState(Boolean(saved && saved.index > 0))
   const [shared, setShared] = useState(false)
   const completing = useRef(false)
   const konamiIndex = useRef(0)
@@ -64,6 +65,7 @@ function App() {
       setHealth(MAX_HEALTH)
       localStorage.removeItem(STORAGE)
     }
+    setResumeAvailable(false)
     setScreen('game')
   }
 
@@ -122,15 +124,16 @@ function App() {
     {screen !== 'start' && <img className="recaptcha-watermark" src="/public/recaptcha-logo.svg" alt="reCAPTCHA" />}
     <AnimatePresence mode="wait">
       {screen === 'start' && <motion.section className="start-page" key="start" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-        <StartCaptcha onComplete={() => begin(!(saved && saved.index > 0))} />
+        <StartCaptcha onComplete={() => begin(!resumeAvailable)} resume={resumeAvailable ? saved : null} />
       </motion.section>}
 
       {screen === 'game' && Level && <motion.section className="level-page" key={level.id} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: .18 }}>
+        <CaseBadge index={index} total={levelRegistry.length} category={level.category} />
         <div className="level-stage">
           <Level complete={complete} reject={reject} />
           <AnimatePresence>{verified && <motion.div className="verified-flash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><span>✓</span><b>Verified</b></motion.div>}</AnimatePresence>
         </div>
-        <AnimatePresence>{notice && <motion.div className="inline-error" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}><b>Verification unsuccessful.</b> {notice}</motion.div>}</AnimatePresence>
+        <AnimatePresence>{notice && <motion.div role="alert" className="inline-error" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}><b>Verification unsuccessful.</b> {notice}</motion.div>}</AnimatePresence>
         {konamiEnabled && <button className="skip-question" onClick={skip}>Skip question</button>}
         <HealthBar health={health} hit={healthHit} />
       </motion.section>}
@@ -145,12 +148,20 @@ function App() {
 }
 
 function HealthBar({ health, hit }: { health: number; hit: number }) {
-  return <div className="health-wrap" key={hit} aria-label={`${health} of ${MAX_HEALTH} health remaining`}>
+  return <div className="health-wrap" key={hit} role="status" aria-live="polite" aria-label={`${health} of ${MAX_HEALTH} health remaining`}>
     <span className="health-label">VERIFICATION HEALTH</span>
     <div className="health-bar">
       {Array.from({ length: MAX_HEALTH }, (_, i) => <span className={`pixel-heart ${i < health ? 'full' : 'empty'}`} key={i}>♥</span>)}
     </div>
   </div>
+}
+
+function CaseBadge({ index, total, category }: { index: number; total: number; category: string }) {
+  return <aside className="case-badge" aria-label={`Verification level ${index + 1} of ${total}`}>
+    <b>FORM RH-{String(index + 1).padStart(2, '0')}</b>
+    <span>{index + 1}/{total}</span>
+    <small>{category}</small>
+  </aside>
 }
 
 function GameOver({ onFinished }: { onFinished: () => void }) {
@@ -207,7 +218,7 @@ function Certificate({ errors, shared, onShare, onRestart }: { errors: number; s
   </>
 }
 
-function StartCaptcha({ onComplete }: { onComplete: () => void }) {
+function StartCaptcha({ onComplete, resume }: { onComplete: () => void; resume?: Save | null }) {
   const [state, setState] = useState<'idle' | 'checking' | 'done'>('idle')
   const verify = () => {
     if (state !== 'idle') return
@@ -217,7 +228,7 @@ function StartCaptcha({ onComplete }: { onComplete: () => void }) {
   }
   return <div className="recaptcha-shell start-captcha" onClick={verify}>
     <div className="recaptcha-main"><button className={`recaptcha-checkbox ${state}`} aria-label="I am not a robot">{state === 'done' ? '✓' : ''}</button><span>I'm not a robot</span><RecaptchaBrand /></div>
-    <div className="recaptcha-footer"><span>Protected by rHuman™</span><span>Privacy · Terms</span></div>
+    <div className="recaptcha-footer"><span>{resume ? `Resume RH-${String(resume.index + 1).padStart(2, '0')}` : 'Protected by rHuman™'}</span><span>{resume ? `${Math.max(0, resume.health)} hearts left` : 'Privacy · Terms'}</span></div>
   </div>
 }
 
