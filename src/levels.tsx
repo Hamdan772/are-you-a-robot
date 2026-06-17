@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -7,7 +8,7 @@ import {
 } from 'react'
 /* eslint-disable react-refresh/only-export-components */
 
-export type LevelProps = { complete: () => void; reject: (message?: string) => void }
+export type LevelProps = { complete: () => void; reject: (message?: string) => void; grantLife: (amount?: number) => void }
 type Entry = { id: string; category: string; component: ComponentType<LevelProps> }
 
 const finishLater = (complete: () => void) => window.setTimeout(complete, 180)
@@ -599,6 +600,174 @@ function Level17({ complete }: LevelProps) {
         ))}
       </div>
       <p>{score} / 3 interviews completed</p>
+    </div>
+  )
+}
+
+// Level 17B — Flappy compliance bird
+function Level17B({ complete, reject, grantLife }: LevelProps) {
+  const height = 250
+  const birdX = 78
+  const birdSize = 24
+  const pipeWidth = 44
+  const gap = 86
+  const speed = 2.25
+  const gravity = 0.34
+  const raf = useRef<number | null>(null)
+  const failTimer = useRef<number | null>(null)
+  const birdY = useRef(120)
+  const velocity = useRef(0)
+  const score = useRef(0)
+  const running = useRef(true)
+  const bonusAt = useRef(15)
+  const pipes = useRef([
+    { x: 360, gapY: 120, scored: false },
+    { x: 540, gapY: 150, scored: false },
+  ])
+  const [view, setView] = useState({
+    birdY: 120,
+    pipes: [
+      { x: 360, gapY: 120, scored: false },
+      { x: 540, gapY: 150, scored: false },
+    ],
+    score: 0,
+    crashed: false,
+    message: 'Tap, click, or press Space to flap.',
+  })
+
+  const nextGap = useCallback(() => 68 + Math.floor(Math.random() * 112), [])
+
+  const reset = useCallback(() => {
+    if (failTimer.current) {
+      window.clearTimeout(failTimer.current)
+      failTimer.current = null
+    }
+    birdY.current = 120
+    velocity.current = 0
+    score.current = 0
+    bonusAt.current = 15
+    running.current = true
+    pipes.current = [
+      { x: 360, gapY: nextGap(), scored: false },
+      { x: 540, gapY: nextGap(), scored: false },
+    ]
+    setView({
+      birdY: birdY.current,
+      pipes: pipes.current,
+      score: 0,
+      crashed: false,
+      message: 'Tap, click, or press Space to flap.',
+    })
+  }, [nextGap])
+
+  const flap = useCallback(() => {
+    if (!running.current) {
+      reset()
+      return
+    }
+    velocity.current = -6.2
+  }, [reset])
+
+  useEffect(() => {
+    const tick = () => {
+      if (running.current) {
+        birdY.current += velocity.current
+        velocity.current += gravity
+        pipes.current = pipes.current.map(pipe => ({ ...pipe, x: pipe.x - speed }))
+        if (pipes.current[0].x < -pipeWidth) {
+          const farthest = Math.max(...pipes.current.map(pipe => pipe.x))
+          pipes.current = [...pipes.current.slice(1), { x: farthest + 178, gapY: nextGap(), scored: false }]
+        }
+        pipes.current = pipes.current.map(pipe => {
+          if (!pipe.scored && pipe.x + pipeWidth < birdX) {
+            score.current += 1
+            pipe.scored = true
+            if (score.current >= 20 && score.current - bonusAt.current >= 5) {
+              bonusAt.current = score.current
+              grantLife(1)
+            }
+          }
+          return pipe
+        })
+        const hitPipe = pipes.current.some(pipe => {
+          const horizontallyInside = birdX + birdSize > pipe.x && birdX < pipe.x + pipeWidth
+          const verticallyOutside = birdY.current < pipe.gapY - gap / 2 || birdY.current + birdSize > pipe.gapY + gap / 2
+          return horizontallyInside && verticallyOutside
+        })
+        const hitWorld = birdY.current < 0 || birdY.current + birdSize > height
+        if (hitPipe || hitWorld) {
+          running.current = false
+          const reached = score.current >= 15
+          setView({
+            birdY: birdY.current,
+            pipes: pipes.current,
+            score: score.current,
+            crashed: true,
+            message: reached ? 'Minimum flight filed. You may continue.' : 'Flight rejected. Resetting paperwork.',
+          })
+          if (!reached) {
+            reject('The office bird was audited mid-air.')
+            failTimer.current = window.setTimeout(reset, 650)
+          }
+        } else {
+          setView({
+            birdY: birdY.current,
+            pipes: pipes.current,
+            score: score.current,
+            crashed: false,
+            message: score.current >= 15 ? 'Minimum reached. Keep flying for bonus lives or file the report.' : 'Tap, click, or press Space to flap.',
+          })
+        }
+      }
+      raf.current = window.requestAnimationFrame(tick)
+    }
+    raf.current = window.requestAnimationFrame(tick)
+    return () => {
+      if (raf.current) window.cancelAnimationFrame(raf.current)
+      if (failTimer.current) window.clearTimeout(failTimer.current)
+    }
+  }, [grantLife, nextGap, reject, reset])
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.code !== 'Space' && event.key !== 'ArrowUp') return
+      event.preventDefault()
+      flap()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [flap])
+
+  return (
+    <div className="flappy-level">
+      <h2>Fly the compliance bird through 15 pipes.</h2>
+      <div
+        className="flappy-game"
+        role="button"
+        tabIndex={0}
+        aria-label="Flappy compliance bird game"
+        onPointerDown={flap}
+      >
+        <div className="flappy-sky">
+          {view.pipes.map((pipe, i) => (
+            <div className="flappy-pipe-pair" key={`${i}-${pipe.x}`} style={{ left: `${pipe.x}px` }}>
+              <span className="pipe top" style={{ height: `${pipe.gapY - gap / 2}px` }} />
+              <span className="pipe bottom" style={{ height: `${height - (pipe.gapY + gap / 2)}px` }} />
+            </div>
+          ))}
+          <span className={`flappy-bird ${view.crashed ? 'crashed' : ''}`} style={{ top: `${view.birdY}px`, left: `${birdX}px` }}>
+            <i />
+          </span>
+          <div className="flappy-score"><b>{view.score}</b><small>/ 15 minimum</small></div>
+        </div>
+      </div>
+      <p className="flappy-status" aria-live="polite">
+        {view.message} Every 5 points after 15 grants one extra life.
+      </p>
+      <div className="flappy-actions">
+        {view.score >= 15 && <button className="action small" onClick={complete}>File flight report</button>}
+        {view.crashed && view.score < 15 && <button className="link-button" onClick={reset}>Restart flight</button>}
+      </div>
     </div>
   )
 }
@@ -1259,6 +1428,7 @@ export const levelRegistry: Entry[] = (
     ['parallel-parking', 'Spatial control', Level15B],
     ['draw-circle', 'Gesture analysis', Level16],
     ['agent-grid', 'Reaction', Level17],
+    ['flappy-bird', 'Motor control', Level17B],
     ['sliding-grid', 'Spatial logic', Level18],
     ['agree-disagree', 'Logical paradox', Level19],
     ['upright', 'Orientation', Level20],
