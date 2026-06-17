@@ -196,3 +196,24 @@ main{isolation:isolate}
   .pointing-robot em{left:-82px;top:54px}
 }
 @media(prefers-reduced-motion:reduce){.alarm-light,.failure-stamp,.exit-door,.departing-human,.pointing-robot,.pointing-robot i,.pointing-robot em{animation-duration:.001ms!important;animation-iteration-count:1!important}}
+
+/* Blackout wall and certificate refinement */
+.blackout-level{background:#020202;cursor:none}
+.blackout-level:before{z-index:5;background:radial-gradient(circle at var(--x) var(--y),#ffffff18 0 42px,#0000 112px),repeating-linear-gradient(0deg,#0000 0 19px,#0007 20px 21px);opacity:1;mix-blend-mode:screen}
+.blackout-level:after{z-index:4;background:#000;opacity:.96;-webkit-mask:radial-gradient(circle 116px at var(--x) var(--y),transparent 0 78px,#000 118px);mask:radial-gradient(circle 116px at var(--x) var(--y),transparent 0 78px,#000 118px)}
+.flashlight-reveal{position:absolute;inset:0;z-index:2;overflow:hidden;background:#211f1c url('/public/levels/blackout-wall.svg') center/cover no-repeat;clip-path:circle(108px at var(--x) var(--y));pointer-events:none}
+.flashlight-reveal:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at var(--x) var(--y),#ffe7a744 0 32px,#0000 112px);pointer-events:none}
+.flashlight-reveal h2{position:absolute;left:50%;top:11vh;z-index:1;width:min(680px,calc(100% - 34px));margin:0;transform:translateX(-50%);text-align:center;font:400 clamp(25px,5vw,46px)/1.05 Arial,sans-serif;letter-spacing:-.03em;color:#fff4b8;text-shadow:0 2px 12px #000}
+.flashlight-room{position:absolute;inset:0}
+.flashlight-room button{pointer-events:auto;background:#f6f0df;color:#111}
+.certificate{position:relative;overflow:hidden;border-color:#b7b0a4;background:linear-gradient(180deg,#fffdfa,#f1eadc);box-shadow:0 20px 70px #00000018}
+.certificate:before{content:"";position:absolute;inset:13px;border:1px solid #d9d1c1;pointer-events:none}
+.certificate:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,#0000 0 14px,#7d6d5010 15px 16px);pointer-events:none}
+.cert-top,.cert-band,.certificate>p,.certificate h1,.certificate strong,.certificate-findings,.cert-signatures,.certified-by,.cert-barcode,.emboss{position:relative;z-index:1}
+.cert-band{display:flex;justify-content:space-between;gap:12px;margin-top:20px;padding:8px 0;border-top:1px solid #d4cbbb;border-bottom:1px solid #d4cbbb;color:#756c5e;font:9px "Courier New",monospace;text-transform:uppercase;letter-spacing:.12em}
+.certificate>p:first-of-type{color:#6a6258}
+.certificate-findings p{background:#fffaf0}
+.cert-barcode{display:flex;justify-content:center;gap:3px;margin-top:24px;height:32px}
+.cert-barcode i{display:block;width:3px;background:#25221e}
+.cert-barcode i:nth-child(2n){width:7px}.cert-barcode i:nth-child(3n){height:22px}.cert-barcode i:nth-child(4n){height:28px}.cert-barcode i:nth-child(5n){width:2px;height:18px}
+@media(max-width:650px){.flashlight-reveal{clip-path:circle(88px at var(--x) var(--y))}.blackout-level:after{-webkit-mask:radial-gradient(circle 94px at var(--x) var(--y),transparent 0 62px,#000 96px);mask:radial-gradient(circle 94px at var(--x) var(--y),transparent 0 62px,#000 96px)}.flashlight-reveal h2{top:9vh;font-size:clamp(24px,8vw,36px)}.cert-band{display:grid;text-align:center}.cert-barcode{height:24px}}

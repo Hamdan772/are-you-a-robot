@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+  <defs>
+    <pattern id="bricks" width="120" height="58" patternUnits="userSpaceOnUse">
+      <rect width="120" height="58" fill="#2e2b27"/>
+      <path d="M0 28.5H120M60 0V28M0 57.5H120M0 29h60v29M60 0h60v29" fill="none" stroke="#403b35" stroke-width="2"/>
+      <path d="M10 13h34M74 16h30M18 43h52M82 40h20" stroke="#25231f" stroke-width="2" opacity=".5"/>
+    </pattern>
+    <radialGradient id="damp" cx="52%" cy="28%" r="70%">
+      <stop offset="0" stop-color="#4a443b"/>
+      <stop offset=".58" stop-color="#2b2824"/>
+      <stop offset="1" stop-color="#171614"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="600" fill="url(#bricks)"/>
+  <rect width="900" height="600" fill="url(#damp)" opacity=".72"/>
+  <path d="M0 470c130-38 236-25 358-48 142-28 274-84 542-44v222H0z" fill="#1c1a17" opacity=".62"/>
+  <path d="M54 92c55 18 102 9 150 0M523 103c72-19 130-16 204 5M315 302c68 17 140 12 212-11M92 505c100-18 209-18 319 2" fill="none" stroke="#5b5145" stroke-width="3" opacity=".18"/>
+</svg>

@@ -866,16 +866,16 @@ function Level25B({ complete }: LevelProps) {
       onPointerMove={moveLight}
       onPointerDown={moveLight}
     >
-      <h2>The lights are off. Find Continue.</h2>
-      <div
-        className="flashlight-room"
-      >
-        <button
-          style={{ left: `${button.x}%`, top: `${button.y}%` }}
-          onClick={complete}
-        >
-          Continue
-        </button>
+      <div className="flashlight-reveal">
+        <h2>The lights are off. Find Continue.</h2>
+        <div className="flashlight-room">
+          <button
+            style={{ left: `${button.x}%`, top: `${button.y}%` }}
+            onClick={complete}
+          >
+            Continue
+          </button>
+        </div>
       </div>
     </div>
   )

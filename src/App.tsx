@@ -13,6 +13,26 @@ const failurePrefixes = [
   'Sonny circled something twice.',
 ]
 
+const buildCertificateText = (errors: number) => [
+  `FORM RH-${levelRegistry.length}-B · PROVISIONAL HUMANITY NOTICE`,
+  'STATUS: HUMAN ENOUGH FOR ORDINARY PURPOSES',
+  'CONFIDENCE: 51%',
+  '',
+  'Approved activities:',
+  '- Opening doors',
+  '- Having opinions',
+  '- Forgetting why you entered a room',
+  '',
+  'Restrictions:',
+  '- Proving consciousness',
+  '- Operating a very serious toaster',
+  '- Explaining this document to an auditor',
+  '',
+  `Character-building errors: ${errors}`,
+  'Filed by: Bureau of Human Guessing',
+  'Responsibility accepted by: nobody available',
+].join('\n')
+
 function App() {
   const saved = useMemo<Save | null>(() => {
     try {
@@ -183,38 +203,33 @@ function GameOver({ onFinished }: { onFinished: () => void }) {
 }
 
 function Certificate({ errors, shared, onShare, onRestart }: { errors: number; shared: boolean; onShare: () => void; onRestart: () => void }) {
-  const copyCertificate = () => {
-    const text = [
-      `FORM RH-${levelRegistry.length}-B · DO NOT LAMINATE`,
-      'PROVISIONAL HUMANITY NOTICE',
-      '',
-      'The bearer is classified as:',
-      'HUMAN ENOUGH FOR ORDINARY PURPOSES',
-      '',
-      'Approved activities: Opening doors, having opinions, forgetting why you entered a room.',
-      'Restricted activities: Proving consciousness, operating a very serious toaster.',
-      `Official confidence: 51%`,
-      `Character-building errors: ${errors}`,
-      'Adult supervision: Pending',
-      '',
-      'Issued automatically. No employee is willing to take responsibility.',
-    ].join('\n')
-    navigator.clipboard?.writeText(text)
+  const copyCertificate = async () => {
+    const text = buildCertificateText(errors)
+    try {
+      await navigator.clipboard?.writeText(text)
+    } catch {
+      // Clipboard can fail on older or restricted browsers; the visible certificate remains selectable.
+    }
     onShare()
   }
   return <>
     <div className="certificate">
-      <div className="cert-top"><img className="brand-logo certificate-logo" src="/public/sonny-logo.jpg" alt="Sonny robot" /><span>FORM RH-{levelRegistry.length}-B · DO NOT LAMINATE</span></div>
-      <p>Provisional humanity notice</p>
+      <div className="cert-top">
+        <img className="brand-logo certificate-logo" src="/public/sonny-logo.jpg" alt="Sonny robot" />
+        <span>FORM RH-{levelRegistry.length}-B · PROVISIONAL</span>
+      </div>
+      <div className="cert-band"><span>Bureau of Human Guessing</span><span>Identity Assurance Division</span></div>
+      <p>Certificate of acceptable uncertainty</p>
       <h1>After considerable administrative hesitation, the bearer is classified as</h1>
       <strong>Human enough for <br />ordinary purposes</strong>
       <div className="cert-rule" />
       <div className="certificate-findings">
         <p><b>Approved activities</b> Opening doors, having opinions, forgetting why you entered a room.</p>
-        <p><b>Restricted activities</b> Proving consciousness, operating a very serious toaster.</p>
+        <p><b>Restrictions</b> Proving consciousness, operating a very serious toaster, explaining this document to an auditor.</p>
       </div>
-      <div className="cert-signatures"><span><i>51%</i><b>Confidence</b></span><span><i>{errors}</i><b>Character-building errors</b></span><span><i>Pending</i><b>Adult supervision</b></span></div>
-      <p className="certified-by">Issued automatically. No employee is willing to take responsibility.</p>
+      <div className="cert-signatures"><span><i>51%</i><b>Official confidence</b></span><span><i>{errors}</i><b>Character-building errors</b></span><span><i>Filed</i><b>Against advice</b></span></div>
+      <p className="certified-by">Issued automatically by a system that briefly felt something.</p>
+      <div className="cert-barcode" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div>
       <div className="emboss">MOSTLY<br />ORGANIC</div>
     </div>
     <div className="certificate-actions"><button className="action" onClick={copyCertificate}>{shared ? 'Certificate copied' : 'Copy certificate'}</button><button className="link-button" onClick={onRestart}>Investigate another person</button></div>
