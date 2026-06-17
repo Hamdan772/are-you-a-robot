@@ -166,15 +166,18 @@ function CaseBadge({ index, total, category }: { index: number; total: number; c
 
 function GameOver({ onFinished }: { onFinished: () => void }) {
   useEffect(() => {
-    const timer = window.setTimeout(onFinished, 5200)
+    const timer = window.setTimeout(onFinished, 6200)
     return () => window.clearTimeout(timer)
   }, [onFinished])
   return <motion.section className="game-over" key="gameover" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
     <div className="exit-scene">
+      <div className="alarm-light" />
+      <div className="failure-stamp">NOT VERIFIED</div>
       <div className="exit-door"><span>EXIT</span></div>
+      <div className="floor-line" />
       <div className="departing-human"><i /><b /></div>
-      <div className="pointing-robot"><img src="/public/sonny-logo.jpg" alt="Sonny pointing toward the exit" /><i /></div>
-      <p className="game-over-order">Verification failed.<br /><b>Please leave through the indicated door.</b></p>
+      <div className="pointing-robot"><img src="/public/sonny-logo.jpg" alt="Sonny pointing toward the exit" /><i /><em /></div>
+      <p className="game-over-order">Verification failed.<br /><b>Please exit calmly and pretend this was voluntary.</b></p>
     </div>
   </motion.section>
 }

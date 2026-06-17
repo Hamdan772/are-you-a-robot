@@ -281,7 +281,7 @@ function Level12({ complete, reject }: LevelProps) {
   }
   return (
     <div className="prompt-block">
-      <h2>Hold until believed.</h2>
+      <h2>Press and hold until the system reluctantly believes you.</h2>
       <button
         className="hold-control"
         style={{ '--held': `${held}%` } as React.CSSProperties}
@@ -504,7 +504,10 @@ function Level16({ complete, reject }: LevelProps) {
   const [drawing, setDrawing] = useState(false)
   const point = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     const r = e.currentTarget.getBoundingClientRect()
-    return { x: e.clientX - r.left, y: e.clientY - r.top }
+    return {
+      x: ((e.clientX - r.left) / r.width) * e.currentTarget.width,
+      y: ((e.clientY - r.top) / r.height) * e.currentTarget.height,
+    }
   }
   const draw = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!drawing) return
@@ -539,6 +542,7 @@ function Level16({ complete, reject }: LevelProps) {
         width="420"
         height="260"
         onPointerDown={e => {
+          e.currentTarget.setPointerCapture(e.pointerId)
           setDrawing(true)
           points.current = [point(e)]
           const c = canvas.current!.getContext('2d')!
@@ -550,7 +554,10 @@ function Level16({ complete, reject }: LevelProps) {
           c.moveTo(points.current[0].x, points.current[0].y)
         }}
         onPointerMove={draw}
-        onPointerUp={end}
+        onPointerUp={e => {
+          e.currentTarget.releasePointerCapture(e.pointerId)
+          end()
+        }}
         onPointerLeave={() => drawing && end()}
       />
     </div>
@@ -597,9 +604,10 @@ function Level17({ complete }: LevelProps) {
 }
 
 // Level 18 — Sliding puzzle
-function Level18({ complete, reject }: LevelProps) {
+function Level18({ complete }: LevelProps) {
   const solved = [1, 2, 3, 4, 5, 6, 7, 8, 0]
   const [tiles, setTiles] = useState([8, 6, 7, 2, 5, 4, 3, 0, 1])
+  const [hint, setHint] = useState('Only tiles touching the empty square can move. No lives are deducted here.')
   const move = (i: number) => {
     const z = tiles.indexOf(0)
     const adjacent =
@@ -609,9 +617,10 @@ function Level18({ complete, reject }: LevelProps) {
       const n = [...tiles]
       ;[n[z], n[i]] = [n[i], n[z]]
       setTiles(n)
+      setHint('Good. The form is becoming slightly less wrong.')
       if (n.join() === solved.join()) finishLater(complete)
     } else {
-      reject('That tile is not adjacent to the gap.')
+      setHint('That tile is not adjacent to the gap. The committee forgives this one.')
     }
   }
   return (
@@ -624,6 +633,7 @@ function Level18({ complete, reject }: LevelProps) {
           </button>
         ))}
       </div>
+      <p className="no-damage-note" aria-live="polite">{hint}</p>
     </div>
   )
 }
@@ -834,7 +844,7 @@ function Level25({ complete }: LevelProps) {
 
 // Level 25B — Flashlight search
 function Level25B({ complete }: LevelProps) {
-  const [light, setLight] = useState({ x: 8, y: 8 })
+  const [light, setLight] = useState({ x: 80, y: 80 })
   const [button] = useState(() => {
     const seed = Date.now() % 997
     return {
@@ -842,17 +852,19 @@ function Level25B({ complete }: LevelProps) {
       y: 28 + ((seed * 53) % 52),
     }
   })
+  const moveLight = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const box = event.currentTarget.getBoundingClientRect()
+    setLight({
+      x: event.clientX - box.left,
+      y: event.clientY - box.top,
+    })
+  }
   return (
     <div
       className="blackout-level"
-      style={{ '--x': `${light.x}%`, '--y': `${light.y}%` } as React.CSSProperties}
-      onPointerMove={event => {
-        const box = event.currentTarget.getBoundingClientRect()
-        setLight({
-          x: ((event.clientX - box.left) / box.width) * 100,
-          y: ((event.clientY - box.top) / box.height) * 100,
-        })
-      }}
+      style={{ '--x': `${light.x}px`, '--y': `${light.y}px` } as React.CSSProperties}
+      onPointerMove={moveLight}
+      onPointerDown={moveLight}
     >
       <h2>The lights are off. Find Continue.</h2>
       <div
