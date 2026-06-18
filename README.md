@@ -18,7 +18,7 @@ Are You a Robot? starts as a plain reCAPTCHA-style widget and gradually becomes 
 
 ## Features
 
-- 35 handcrafted verification levels with different interaction models
+- 31 handcrafted verification levels with different interaction models
 - reCAPTCHA-style image grids, memory tests, timing traps, parking puzzles, canvas drawing, pointer challenges, hidden UI, and a tiny Flappy-style compliance flight
 - Mobile controls for keyboard-heavy levels, plus responsive grid, canvas, and parking-lot sizing
 - A five-heart health system with non-punitive logic puzzles where guessing should not cost lives
@@ -61,7 +61,7 @@ Progress, health, and error counts are saved in `localStorage`. There is no back
 
 ```text
 src/App.tsx        App flow, health, persistence, certificate, game-over scene
-src/levels.tsx     The 35 level components and registry
+src/levels.tsx     The 31 level components and registry
 src/App.css        CAPTCHA UI, puzzle visuals, responsive layout, animations
 public/levels/     Photos, sprites, CAPTCHA images, and puzzle assets
 public/             Logo, favicon, readme image, reCAPTCHA-style badge

@@ -3,9 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { levelRegistry } from './levels'
 import './App.css'
 
-const STORAGE = 'human-verification-progress-v6'
+const STORAGE = 'human-verification-progress-v7'
 const MAX_HEALTH = 5
-const MAX_BONUS_HEALTH = 10
 const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']
 type Save = { index: number; errors: number; health: number }
 const failurePrefixes = [
@@ -109,10 +108,6 @@ function App() {
 
   const complete = () => advance(450, true)
 
-  const grantLife = useCallback((amount = 1) => {
-    setHealth(value => Math.min(MAX_BONUS_HEALTH, value + amount))
-  }, [])
-
   const reject = (message = 'Please try again.') => {
     setErrors(value => value + 1)
     setHealthHit(value => value + 1)
@@ -155,10 +150,10 @@ function App() {
       {screen === 'game' && Level && <motion.section className="level-page" key={level.id} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: .18 }}>
         <CaseBadge index={index} total={levelRegistry.length} category={level.category} />
         <div className="level-stage">
-          <Level complete={complete} reject={reject} grantLife={grantLife} />
+          <Level complete={complete} reject={reject} />
           <AnimatePresence>{verified && <motion.div className="verified-flash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><span>✓</span><b>Verified</b></motion.div>}</AnimatePresence>
         </div>
-        <AnimatePresence>{notice && <motion.div role="alert" className="inline-error" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}><b>Verification unsuccessful.</b> {notice}</motion.div>}</AnimatePresence>
+        <AnimatePresence>{notice && <motion.div role="alert" className="inline-error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><b>Verification unsuccessful.</b> {notice}</motion.div>}</AnimatePresence>
         {konamiEnabled && <button className="skip-question" onClick={skip}>Skip question</button>}
         <HealthBar health={health} hit={healthHit} />
       </motion.section>}
@@ -173,11 +168,10 @@ function App() {
 }
 
 function HealthBar({ health, hit }: { health: number; hit: number }) {
-  const slots = Math.max(MAX_HEALTH, health)
   return <div className="health-wrap" key={hit} role="status" aria-live="polite" aria-label={`${health} health remaining`}>
-    <span className="health-label">VERIFICATION HEALTH</span>
+    <span className="health-label">VERIFICATION HEALTH <b>{health}/{MAX_HEALTH}</b></span>
     <div className="health-bar">
-      {Array.from({ length: slots }, (_, i) => <span className={`pixel-heart ${i < health ? 'full' : 'empty'} ${i >= MAX_HEALTH ? 'bonus' : ''}`} key={i}>♥</span>)}
+      {Array.from({ length: MAX_HEALTH }, (_, i) => <span className={`pixel-heart ${i < health ? 'full' : 'empty'}`} key={i}>♥</span>)}
     </div>
   </div>
 }

@@ -3,12 +3,13 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ComponentType,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 /* eslint-disable react-refresh/only-export-components */
 
-export type LevelProps = { complete: () => void; reject: (message?: string) => void; grantLife: (amount?: number) => void }
+export type LevelProps = { complete: () => void; reject: (message?: string) => void }
 type Entry = { id: string; category: string; component: ComponentType<LevelProps> }
 
 const finishLater = (complete: () => void) => window.setTimeout(complete, 180)
@@ -202,98 +203,6 @@ function Level10({ complete }: LevelProps) {
       <button className="action small memory-continue" onClick={complete}>
         Continue
       </button>
-    </div>
-  )
-}
-
-// Level 11 — Dial to 50
-function Level11({ complete, reject }: LevelProps) {
-  const [value, setValue] = useState(0)
-  const exactAttempts = useRef(0)
-  const change = (raw: number) => {
-    if (raw === 50) {
-      exactAttempts.current += 1
-      if (exactAttempts.current < 3) {
-        setValue(exactAttempts.current % 2 ? 49.8 : 50.2)
-        return
-      }
-    }
-    setValue(raw)
-  }
-  return (
-    <div className="gauge-level">
-      <h2>Set the dial to 50. The dial disagrees.</h2>
-      <div className="gauge">
-        <span style={{ transform: `rotate(${(value - 50) * 1.7}deg)` }} />
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="100"
-        step=".1"
-        value={value}
-        onChange={e => change(+e.target.value)}
-      />
-      <button
-        className="action small"
-        onClick={() =>
-          value === 50
-            ? complete()
-            : reject('That is a creative approximation.')
-        }
-      >
-        Confirm {value.toFixed(1)}
-      </button>
-    </div>
-  )
-}
-
-// Level 12 — Hold button
-function Level12({ complete, reject }: LevelProps) {
-  const [held, setHeld] = useState(0)
-  const heldRef = useRef(0)
-  const timer = useRef<number | null>(null)
-  const maxHoldMs = 35_000
-  useEffect(() => () => { if (timer.current) clearInterval(timer.current) }, [])
-  const stop = () => {
-    if (timer.current) clearInterval(timer.current)
-    timer.current = null
-    if (heldRef.current > 0 && heldRef.current < 100) {
-      heldRef.current = 0
-      setHeld(0)
-      reject('Commitment interrupted.')
-    }
-  }
-  const start = () => {
-    if (timer.current) return
-    const began = Date.now()
-    timer.current = window.setInterval(() => {
-      const elapsed = Date.now() - began
-      const time = Math.min(1, elapsed / maxHoldMs)
-      const n = 100 * (1 - Math.pow(1 - time, 3))
-      heldRef.current = n
-      setHeld(n)
-      if (time >= 1) {
-        if (timer.current) clearInterval(timer.current)
-        timer.current = null
-        complete()
-      }
-    }, 30)
-  }
-  return (
-    <div className="prompt-block">
-      <h2>Press and hold until the system reluctantly believes you.</h2>
-      <button
-        className="hold-control"
-        style={{ '--held': `${held}%` } as React.CSSProperties}
-        onPointerDown={start}
-        onPointerUp={stop}
-        onPointerCancel={stop}
-        onPointerLeave={() => { if (heldRef.current > 0) stop() }}
-      >
-        {held ? `${Math.floor(held)}% convinced` : 'Press and hold'}
-      </button>
-      <p>Belief becomes more expensive near completion.</p>
     </div>
   )
 }
@@ -605,22 +514,23 @@ function Level17({ complete }: LevelProps) {
 }
 
 // Level 17B — Flappy compliance bird
-function Level17B({ complete, reject, grantLife }: LevelProps) {
-  const height = 320
+function Level17B({ complete, reject }: LevelProps) {
+  const goal = 10
+  const height = 340
   const birdX = 96
   const birdSize = 34
   const pipeWidth = 58
-  const gap = 132
-  const pipeSpacing = 245
-  const speed = 1.55
-  const gravity = 0.25
+  const gap = 150
+  const pipeSpacing = 275
+  const speed = 1.35
+  const gravity = 0.23
   const raf = useRef<number | null>(null)
   const failTimer = useRef<number | null>(null)
   const birdY = useRef(150)
   const velocity = useRef(0)
   const score = useRef(0)
   const running = useRef(true)
-  const bonusAt = useRef(15)
+  const done = useRef(false)
   const pipes = useRef([
     { x: 520, gapY: 150, scored: false },
     { x: 765, gapY: 180, scored: false },
@@ -636,7 +546,7 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
     message: 'Tap, click, or press Space to flap.',
   })
 
-  const nextGap = useCallback(() => 94 + Math.floor(Math.random() * 132), [])
+  const nextGap = useCallback(() => 105 + Math.floor(Math.random() * 145), [])
 
   const reset = useCallback(() => {
     if (failTimer.current) {
@@ -646,7 +556,7 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
     birdY.current = 150
     velocity.current = 0
     score.current = 0
-    bonusAt.current = 15
+    done.current = false
     running.current = true
     pipes.current = [
       { x: 520, gapY: nextGap(), scored: false },
@@ -666,7 +576,7 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
       reset()
       return
     }
-    velocity.current = -5.2
+    velocity.current = -4.9
   }, [reset])
 
   useEffect(() => {
@@ -683,9 +593,10 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
           if (!pipe.scored && pipe.x + pipeWidth < birdX) {
             score.current += 1
             pipe.scored = true
-            if (score.current >= 20 && score.current - bonusAt.current >= 5) {
-              bonusAt.current = score.current
-              grantLife(1)
+            if (score.current >= goal && !done.current) {
+              done.current = true
+              running.current = false
+              complete()
             }
           }
           return pipe
@@ -698,13 +609,13 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
         const hitWorld = birdY.current < 0 || birdY.current + birdSize > height
         if (hitPipe || hitWorld) {
           running.current = false
-          const reached = score.current >= 15
+          const reached = score.current >= goal
           setView({
             birdY: birdY.current,
             pipes: pipes.current,
             score: score.current,
             crashed: true,
-            message: reached ? 'Minimum flight filed. You may continue.' : 'Flight rejected. Resetting paperwork.',
+            message: reached ? 'Flight accepted.' : 'Flight rejected. Resetting paperwork.',
           })
           if (!reached) {
             reject('The office bird was audited mid-air.')
@@ -716,7 +627,7 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
             pipes: pipes.current,
             score: score.current,
             crashed: false,
-            message: score.current >= 15 ? 'Minimum reached. Keep flying for bonus lives or file the report.' : 'Tap, click, or press Space to flap.',
+            message: score.current >= goal - 2 ? 'Almost cleared. Keep the paperwork airborne.' : 'Tap, click, or press Space to flap.',
           })
         }
       }
@@ -727,7 +638,7 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
       if (raf.current) window.cancelAnimationFrame(raf.current)
       if (failTimer.current) window.clearTimeout(failTimer.current)
     }
-  }, [grantLife, nextGap, reject, reset])
+  }, [complete, nextGap, reject, reset])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -741,7 +652,7 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
 
   return (
     <div className="flappy-level">
-      <h2>Fly the compliance bird through 15 pipes.</h2>
+      <h2>Fly the compliance bird through 10 pipes.</h2>
       <div
         className="flappy-game"
         role="button"
@@ -757,15 +668,14 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
             </div>
           ))}
           <span className={`flappy-bird ${view.crashed ? 'crashed' : ''}`} style={{ top: `${view.birdY}px`, left: `${birdX}px` }} />
-          <div className="flappy-score"><b>{view.score}</b><small>/ 15 minimum</small></div>
+          <div className="flappy-score"><b>{view.score}</b><small>/ 10</small></div>
         </div>
       </div>
       <p className="flappy-status" aria-live="polite">
-        {view.message} Every 5 points after 15 grants one extra life.
+        {view.message} Reach 10 and the form advances automatically.
       </p>
       <div className="flappy-actions">
-        {view.score >= 15 && <button className="action small" onClick={complete}>File flight report</button>}
-        {view.crashed && view.score < 15 && <button className="link-button" onClick={reset}>Restart flight</button>}
+        {view.crashed && view.score < goal && <button className="link-button" onClick={reset}>Restart flight</button>}
       </div>
     </div>
   )
@@ -868,8 +778,9 @@ function Level20({ complete, reject }: LevelProps) {
 }
 
 // Level 21 — Green lights
-function Level21({ complete, reject }: LevelProps) {
+function Level21({ complete }: LevelProps) {
   const [light, setLight] = useState(0)
+  const [note, setNote] = useState('Five lights. Allegedly independent.')
   const lightRef = useRef(0)
   const sabotages = useRef(0)
   const toggle = (i: number) => {
@@ -879,11 +790,12 @@ function Level21({ complete, reject }: LevelProps) {
       sabotages.current += 1
       lightRef.current = next ^ (1 << dropped)
       setLight(lightRef.current)
-      reject('One indicator reconsidered at the last moment.')
+      setNote('One indicator reconsidered. No penalty, just bureaucracy.')
       return
     }
     lightRef.current = next
     setLight(next)
+    setNote(next === 31 ? 'All indicators deny ever being red.' : 'Progress recorded in a drawer somewhere.')
     if (next === 31) complete()
   }
   return (
@@ -900,97 +812,10 @@ function Level21({ complete, reject }: LevelProps) {
           </button>
         ))}
       </div>
-      <button className="link-button" onClick={() => { lightRef.current = 0; setLight(0); reject('Resetting is a machine instinct.') }}>
+      <p className="no-damage-note" aria-live="polite">{note}</p>
+      <button className="link-button" onClick={() => { lightRef.current = 0; setLight(0); setNote('Reset accepted. No one learned anything.') }}>
         Reset indicators
       </button>
-    </div>
-  )
-}
-
-// Level 22 — Click exactly four times
-function Level22({ complete, reject }: LevelProps) {
-  const [count, setCount] = useState(0)
-  const [waiting, setWaiting] = useState(false)
-  const countRef = useRef(0)
-  const waitingRef = useRef(false)
-  const timer = useRef<number | null>(null)
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
-  const click = () => {
-    if (waitingRef.current) {
-      if (timer.current) clearTimeout(timer.current)
-      timer.current = null
-      waitingRef.current = false
-      countRef.current = 0
-      setWaiting(false)
-      setCount(0)
-      reject('The fifth click restarted the count.')
-      return
-    }
-    const next = countRef.current + 1
-    countRef.current = next
-    setCount(next)
-    if (next === 4) {
-      waitingRef.current = true
-      setWaiting(true)
-      timer.current = window.setTimeout(complete, 5000)
-    }
-  }
-  return (
-    <div className="prompt-block">
-      <h2>Click four times, then leave it alone.</h2>
-      <button
-        className="large-counter"
-        onClick={click}
-      >
-        {waiting ? 'Wait' : count || 'Click'}
-      </button>
-      {waiting && <p>Do not click again for five seconds.</p>}
-    </div>
-  )
-}
-
-// Level 23 — Wait for permission
-function Level23({ complete, reject }: LevelProps) {
-  const [word, setWord] = useState('DO NOT CLICK')
-  const [requesting, setRequesting] = useState(false)
-  const [reason, setReason] = useState('')
-  const timer = useRef<number | null>(null)
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
-  const submitReason = (event: React.FormEvent) => {
-    event.preventDefault()
-    if (reason.trim().length < 12) {
-      reject('The reason requires at least twelve convincing characters.')
-      return
-    }
-    if (timer.current) clearTimeout(timer.current)
-    setWord('REVIEWING REASON')
-    timer.current = window.setTimeout(() => {
-      setWord('CLICK NOW')
-      timer.current = null
-    }, 1800)
-  }
-  return (
-    <div className="prompt-block">
-      <h2>The button requires its own permission.</h2>
-      <button
-        className="permission-button"
-        onClick={() =>
-          word === 'CLICK NOW' ? complete() : reject('Permission was not granted.')
-        }
-      >
-        {word}
-      </button>
-      {!requesting ? (
-        <button className="link-button" onClick={() => setRequesting(true)}>
-          Request permission
-        </button>
-      ) : (
-        <form className="permission-form" onSubmit={submitReason}>
-          <label htmlFor="permission-reason">Reason for clicking</label>
-          <textarea id="permission-reason" value={reason} onChange={event => setReason(event.target.value)} placeholder="Explain why this click is necessary." />
-          <button type="submit">Submit reason</button>
-        </form>
-      )}
     </div>
   )
 }
@@ -1030,7 +855,7 @@ function Level25B({ complete }: LevelProps) {
   return (
     <div
       className="blackout-level"
-      style={{ '--x': `${light.x}px`, '--y': `${light.y}px` } as React.CSSProperties}
+      style={{ '--x': `${light.x}px`, '--y': `${light.y}px` } as CSSProperties}
       onPointerMove={moveLight}
       onPointerDown={moveLight}
     >
@@ -1419,8 +1244,6 @@ export const levelRegistry: Entry[] = (
     ['fruit-chair', 'Object recognition', Level05],
     ['small-talk', 'Social protocol', Level09],
     ['blue-memory', 'Visual memory', Level10],
-    ['approximate', 'Motor calibration', Level11],
-    ['hold-belief', 'Presence', Level12],
     ['human-error', 'Image inspection', Level13],
     ['duck-recall', 'Visual memory', Level14],
     ['parking', 'Spatial control', Level15],
@@ -1432,8 +1255,6 @@ export const levelRegistry: Entry[] = (
     ['agree-disagree', 'Logical paradox', Level19],
     ['upright', 'Orientation', Level20],
     ['green-lights', 'Systems reasoning', Level21],
-    ['four-clicks', 'Counting', Level22],
-    ['permission', 'Impulse control', Level23],
     ['shy-button', 'Pointer control', Level25],
     ['flashlight', 'Pointer control', Level25B],
     ['pixel-h', 'Pattern recognition', Level26],
