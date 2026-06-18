@@ -81,6 +81,7 @@ The absurd parts are carried by the interactions rather than a loud theme shift.
 - Some photo tiles sourced from [LoremFlickr](https://loremflickr.com/)
 - Eye illustration from [Openclipart](https://openclipart.org/)
 - reCAPTCHA-style badge sourced from [Wikimedia Commons](https://commons.wikimedia.org/)
+- Flappy-style bird and pipe sprites by Ian Peter from [OpenGameArt](https://opengameart.org/content/flappy-bird-style-sprites), licensed CC0
 
 ## Disclaimer
 

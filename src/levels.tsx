@@ -606,50 +606,51 @@ function Level17({ complete }: LevelProps) {
 
 // Level 17B — Flappy compliance bird
 function Level17B({ complete, reject, grantLife }: LevelProps) {
-  const height = 250
-  const birdX = 78
-  const birdSize = 24
-  const pipeWidth = 44
-  const gap = 86
-  const speed = 2.25
-  const gravity = 0.34
+  const height = 320
+  const birdX = 96
+  const birdSize = 34
+  const pipeWidth = 58
+  const gap = 132
+  const pipeSpacing = 245
+  const speed = 1.55
+  const gravity = 0.25
   const raf = useRef<number | null>(null)
   const failTimer = useRef<number | null>(null)
-  const birdY = useRef(120)
+  const birdY = useRef(150)
   const velocity = useRef(0)
   const score = useRef(0)
   const running = useRef(true)
   const bonusAt = useRef(15)
   const pipes = useRef([
-    { x: 360, gapY: 120, scored: false },
-    { x: 540, gapY: 150, scored: false },
+    { x: 520, gapY: 150, scored: false },
+    { x: 765, gapY: 180, scored: false },
   ])
   const [view, setView] = useState({
-    birdY: 120,
+    birdY: 150,
     pipes: [
-      { x: 360, gapY: 120, scored: false },
-      { x: 540, gapY: 150, scored: false },
+      { x: 520, gapY: 150, scored: false },
+      { x: 765, gapY: 180, scored: false },
     ],
     score: 0,
     crashed: false,
     message: 'Tap, click, or press Space to flap.',
   })
 
-  const nextGap = useCallback(() => 68 + Math.floor(Math.random() * 112), [])
+  const nextGap = useCallback(() => 94 + Math.floor(Math.random() * 132), [])
 
   const reset = useCallback(() => {
     if (failTimer.current) {
       window.clearTimeout(failTimer.current)
       failTimer.current = null
     }
-    birdY.current = 120
+    birdY.current = 150
     velocity.current = 0
     score.current = 0
     bonusAt.current = 15
     running.current = true
     pipes.current = [
-      { x: 360, gapY: nextGap(), scored: false },
-      { x: 540, gapY: nextGap(), scored: false },
+      { x: 520, gapY: nextGap(), scored: false },
+      { x: 765, gapY: nextGap(), scored: false },
     ]
     setView({
       birdY: birdY.current,
@@ -665,7 +666,7 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
       reset()
       return
     }
-    velocity.current = -6.2
+    velocity.current = -5.2
   }, [reset])
 
   useEffect(() => {
@@ -676,7 +677,7 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
         pipes.current = pipes.current.map(pipe => ({ ...pipe, x: pipe.x - speed }))
         if (pipes.current[0].x < -pipeWidth) {
           const farthest = Math.max(...pipes.current.map(pipe => pipe.x))
-          pipes.current = [...pipes.current.slice(1), { x: farthest + 178, gapY: nextGap(), scored: false }]
+          pipes.current = [...pipes.current.slice(1), { x: farthest + pipeSpacing, gapY: nextGap(), scored: false }]
         }
         pipes.current = pipes.current.map(pipe => {
           if (!pipe.scored && pipe.x + pipeWidth < birdX) {
@@ -748,16 +749,14 @@ function Level17B({ complete, reject, grantLife }: LevelProps) {
         aria-label="Flappy compliance bird game"
         onPointerDown={flap}
       >
-        <div className="flappy-sky">
+        <div className="flappy-sky" style={{ height: `${height}px` }}>
           {view.pipes.map((pipe, i) => (
             <div className="flappy-pipe-pair" key={`${i}-${pipe.x}`} style={{ left: `${pipe.x}px` }}>
               <span className="pipe top" style={{ height: `${pipe.gapY - gap / 2}px` }} />
               <span className="pipe bottom" style={{ height: `${height - (pipe.gapY + gap / 2)}px` }} />
             </div>
           ))}
-          <span className={`flappy-bird ${view.crashed ? 'crashed' : ''}`} style={{ top: `${view.birdY}px`, left: `${birdX}px` }}>
-            <i />
-          </span>
+          <span className={`flappy-bird ${view.crashed ? 'crashed' : ''}`} style={{ top: `${view.birdY}px`, left: `${birdX}px` }} />
           <div className="flappy-score"><b>{view.score}</b><small>/ 15 minimum</small></div>
         </div>
       </div>
