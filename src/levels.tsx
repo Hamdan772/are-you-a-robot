@@ -516,134 +516,239 @@ function Level17({ complete }: LevelProps) {
 // Level 17B — Flappy compliance bird
 function Level17B({ complete, reject }: LevelProps) {
   const goal = 10
-  const height = 340
-  const birdX = 96
-  const birdSize = 34
-  const pipeWidth = 58
-  const gap = 150
-  const pipeSpacing = 275
-  const speed = 1.35
-  const gravity = 0.23
+  const width = 360
+  const height = 520
+  const groundY = 414
+  const birdX = 82
+  const birdWidth = 42
+  const birdHeight = 30
+  const pipeWidth = 70
+  const gap = 168
+  const pipeSpacing = 245
+  const speed = 118
+  const gravity = 875
+  const lift = -315
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const raf = useRef<number | null>(null)
   const failTimer = useRef<number | null>(null)
-  const birdY = useRef(150)
+  const lastTime = useRef(0)
+  const birdY = useRef(185)
   const velocity = useRef(0)
-  const score = useRef(0)
+  const scoreRef = useRef(0)
   const running = useRef(false)
   const started = useRef(false)
   const crashed = useRef(false)
   const done = useRef(false)
-  const pipes = useRef([
-    { x: 520, gapY: 150, scored: false },
-    { x: 765, gapY: 180, scored: false },
-  ])
+  const pipes = useRef<{ x: number; gapY: number; scored: boolean }[]>([])
+  const images = useRef<Record<string, HTMLImageElement>>({})
   const [view, setView] = useState({
-    birdY: 150,
-    pipes: [
-      { x: 520, gapY: 150, scored: false },
-      { x: 765, gapY: 180, scored: false },
-    ],
     score: 0,
     started: false,
     crashed: false,
+    ready: false,
     message: 'Tap, click, or press Space to begin.',
   })
 
-  const nextGap = useCallback(() => 105 + Math.floor(Math.random() * 145), [])
+  const nextGap = useCallback(() => 128 + Math.floor(Math.random() * 192), [])
+
+  const resetPipes = useCallback(() => {
+    pipes.current = [
+      { x: width + 84, gapY: nextGap(), scored: false },
+      { x: width + 84 + pipeSpacing, gapY: nextGap(), scored: false },
+    ]
+  }, [nextGap])
+
+  const drawCover = (ctx: CanvasRenderingContext2D, image: HTMLImageElement) => {
+    const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight)
+    const drawWidth = image.naturalWidth * scale
+    const drawHeight = image.naturalHeight * scale
+    ctx.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight)
+  }
+
+  const drawTiledGround = (ctx: CanvasRenderingContext2D, image: HTMLImageElement, offset: number) => {
+    const tileWidth = image.naturalWidth
+    for (let x = -tileWidth + (offset % tileWidth); x < width + tileWidth; x += tileWidth) {
+      ctx.drawImage(image, x, groundY, tileWidth, height - groundY)
+    }
+  }
+
+  const drawPipe = (
+    ctx: CanvasRenderingContext2D,
+    image: HTMLImageElement,
+    x: number,
+    y: number,
+    drawHeight: number,
+    flip = false,
+  ) => {
+    if (drawHeight <= 0) return
+    if (flip) {
+      ctx.save()
+      ctx.translate(x, y + drawHeight)
+      ctx.scale(1, -1)
+      ctx.drawImage(image, 0, 0, pipeWidth, drawHeight)
+      ctx.restore()
+      return
+    }
+    ctx.drawImage(image, x, y, pipeWidth, drawHeight)
+  }
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')
+    const bg = images.current.background
+    const base = images.current.base
+    const pipe = images.current.pipe
+    const birdFrames = [images.current.birdUp, images.current.birdMid, images.current.birdDown]
+    if (!canvas || !ctx || !bg || !base || !pipe || birdFrames.some(frame => !frame)) return
+
+    ctx.imageSmoothingEnabled = false
+    ctx.clearRect(0, 0, width, height)
+    drawCover(ctx, bg)
+
+    const groundOffset = started.current ? -(performance.now() / 1000 * speed) : 0
+    pipes.current.forEach(pipeState => {
+      const topHeight = pipeState.gapY - gap / 2
+      const bottomY = pipeState.gapY + gap / 2
+      drawPipe(ctx, pipe, pipeState.x, 0, topHeight, true)
+      drawPipe(ctx, pipe, pipeState.x, bottomY, groundY - bottomY)
+    })
+    drawTiledGround(ctx, base, groundOffset)
+
+    const frameIndex = !started.current ? 1 : Math.floor(performance.now() / 115) % birdFrames.length
+    const rotation = Math.max(-24, Math.min(68, velocity.current / 8))
+    ctx.save()
+    ctx.translate(birdX + birdWidth / 2, birdY.current + birdHeight / 2)
+    ctx.rotate((rotation * Math.PI) / 180)
+    ctx.drawImage(birdFrames[frameIndex], -birdWidth / 2, -birdHeight / 2, birdWidth, birdHeight)
+    ctx.restore()
+
+    ctx.fillStyle = '#fff'
+    ctx.strokeStyle = '#4d3a2a'
+    ctx.lineWidth = 3
+    ctx.font = 'bold 32px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.strokeText(String(scoreRef.current), width / 2, 54)
+    ctx.fillText(String(scoreRef.current), width / 2, 54)
+  }, [])
 
   const reset = useCallback(() => {
     if (failTimer.current) {
       window.clearTimeout(failTimer.current)
       failTimer.current = null
     }
-    birdY.current = 150
+    birdY.current = 185
     velocity.current = 0
-    score.current = 0
+    scoreRef.current = 0
     done.current = false
     running.current = false
     started.current = false
     crashed.current = false
-    pipes.current = [
-      { x: 520, gapY: nextGap(), scored: false },
-      { x: 765, gapY: nextGap(), scored: false },
-    ]
-    setView({
-      birdY: birdY.current,
-      pipes: pipes.current,
+    lastTime.current = 0
+    resetPipes()
+    setView(previous => ({
+      ...previous,
       score: 0,
       started: false,
       crashed: false,
       message: 'Tap, click, or press Space to begin.',
-    })
-  }, [nextGap])
+    }))
+    requestAnimationFrame(draw)
+  }, [draw, resetPipes])
 
   const flap = useCallback(() => {
-    if (crashed.current) {
-      reset()
-      return
-    }
+    if (!view.ready || crashed.current || done.current) return
     if (!started.current) {
       started.current = true
       running.current = true
+      lastTime.current = performance.now()
+      setView(previous => ({ ...previous, started: true, message: 'Tap, click, or press Space to flap.' }))
     }
-    velocity.current = -4.9
-  }, [reset])
+    velocity.current = lift
+  }, [lift, view.ready])
 
   useEffect(() => {
-    const tick = () => {
+    const sources = {
+      background: '/public/levels/flappy-github/background-day.png',
+      base: '/public/levels/flappy-github/base.png',
+      pipe: '/public/levels/flappy-github/pipe-green.png',
+      birdUp: '/public/levels/flappy-github/yellowbird-upflap.png',
+      birdMid: '/public/levels/flappy-github/yellowbird-midflap.png',
+      birdDown: '/public/levels/flappy-github/yellowbird-downflap.png',
+    }
+    let mounted = true
+    Promise.all(Object.entries(sources).map(([key, src]) => new Promise<void>((resolve, rejectLoad) => {
+      const image = new Image()
+      image.onload = () => {
+        images.current[key] = image
+        resolve()
+      }
+      image.onerror = () => rejectLoad(new Error(src))
+      image.src = src
+    }))).then(() => {
+      if (!mounted) return
+      resetPipes()
+      setView(previous => ({ ...previous, ready: true }))
+      draw()
+    }).catch(() => {
+      if (mounted) setView(previous => ({ ...previous, message: 'Bird assets failed inspection. The office is embarrassed.' }))
+    })
+    return () => { mounted = false }
+  }, [draw, resetPipes])
+
+  useEffect(() => {
+    const tick = (now: number) => {
+      const delta = lastTime.current ? Math.min((now - lastTime.current) / 1000, .033) : 0
+      lastTime.current = now
       if (running.current) {
-        birdY.current += velocity.current
-        velocity.current += gravity
-        pipes.current = pipes.current.map(pipe => ({ ...pipe, x: pipe.x - speed }))
+        birdY.current += velocity.current * delta
+        velocity.current += gravity * delta
+        pipes.current = pipes.current.map(pipe => ({ ...pipe, x: pipe.x - speed * delta }))
         if (pipes.current[0].x < -pipeWidth) {
           const farthest = Math.max(...pipes.current.map(pipe => pipe.x))
           pipes.current = [...pipes.current.slice(1), { x: farthest + pipeSpacing, gapY: nextGap(), scored: false }]
         }
         pipes.current = pipes.current.map(pipe => {
           if (!pipe.scored && pipe.x + pipeWidth < birdX) {
-            score.current += 1
+            scoreRef.current += 1
             pipe.scored = true
-            if (score.current >= goal && !done.current) {
+            setView(previous => ({ ...previous, score: scoreRef.current }))
+            if (scoreRef.current >= goal && !done.current) {
               done.current = true
               running.current = false
+              setView(previous => ({ ...previous, message: 'Flight accepted. Proceeding before anyone changes their mind.' }))
               complete()
             }
           }
           return pipe
         })
+        const birdRect = {
+          x: birdX + 6,
+          y: birdY.current + 5,
+          width: birdWidth - 12,
+          height: birdHeight - 10,
+        }
         const hitPipe = pipes.current.some(pipe => {
-          const horizontallyInside = birdX + birdSize > pipe.x && birdX < pipe.x + pipeWidth
-          const verticallyOutside = birdY.current < pipe.gapY - gap / 2 || birdY.current + birdSize > pipe.gapY + gap / 2
+          const horizontallyInside = birdRect.x + birdRect.width > pipe.x && birdRect.x < pipe.x + pipeWidth
+          const verticallyOutside = birdRect.y < pipe.gapY - gap / 2 || birdRect.y + birdRect.height > pipe.gapY + gap / 2
           return horizontallyInside && verticallyOutside
         })
-        const hitWorld = birdY.current < 0 || birdY.current + birdSize > height
+        const hitWorld = birdY.current < -12 || birdY.current + birdHeight > groundY
         if (hitPipe || hitWorld) {
           running.current = false
           crashed.current = true
-          const reached = score.current >= goal
-          setView({
-            birdY: birdY.current,
-            pipes: pipes.current,
-            score: score.current,
-            started: started.current,
+          setView(previous => ({
+            ...previous,
+            score: scoreRef.current,
             crashed: true,
-            message: reached ? 'Flight accepted.' : 'Flight rejected. Resetting paperwork.',
-          })
-          if (!reached) {
-            reject('The office bird was audited mid-air.')
-            failTimer.current = window.setTimeout(reset, 650)
-          }
-        } else {
-          setView({
-            birdY: birdY.current,
-            pipes: pipes.current,
-            score: score.current,
-            started: started.current,
-            crashed: false,
-            message: score.current >= goal - 2 ? 'Almost cleared. Keep the paperwork airborne.' : 'Tap, click, or press Space to flap.',
-          })
+            message: 'Flight rejected. Resetting paperwork.',
+          }))
+          reject('The office bird was audited mid-air.')
+          failTimer.current = window.setTimeout(reset, 800)
+        } else if (scoreRef.current >= goal - 2) {
+          setView(previous => ({ ...previous, message: 'Almost cleared. Keep the paperwork airborne.' }))
         }
       }
+      draw()
       raf.current = window.requestAnimationFrame(tick)
     }
     raf.current = window.requestAnimationFrame(tick)
@@ -651,7 +756,7 @@ function Level17B({ complete, reject }: LevelProps) {
       if (raf.current) window.cancelAnimationFrame(raf.current)
       if (failTimer.current) window.clearTimeout(failTimer.current)
     }
-  }, [complete, nextGap, reject, reset])
+  }, [complete, draw, nextGap, reject, reset])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -673,15 +778,10 @@ function Level17B({ complete, reject }: LevelProps) {
         aria-label="Flappy compliance bird game"
         onPointerDown={flap}
       >
-        <div className="flappy-sky" style={{ height: `${height}px` }}>
-          {!view.started && !view.crashed && <div className="flappy-start">Press Space or tap to start</div>}
-          {view.pipes.map((pipe, i) => (
-            <div className="flappy-pipe-pair" key={`${i}-${pipe.x}`} style={{ left: `${pipe.x}px` }}>
-              <span className="pipe top" style={{ height: `${pipe.gapY - gap / 2}px` }} />
-              <span className="pipe bottom" style={{ height: `${height - (pipe.gapY + gap / 2)}px` }} />
-            </div>
-          ))}
-          <span className={`flappy-bird ${view.crashed ? 'crashed' : ''}`} style={{ top: `${view.birdY}px`, left: `${birdX}px` }} />
+        <div className="flappy-sky">
+          <canvas ref={canvasRef} width={width} height={height} aria-hidden="true" />
+          {!view.ready && <div className="flappy-start">Loading bird assets</div>}
+          {view.ready && !view.started && !view.crashed && <div className="flappy-start">Press Space or tap to start</div>}
           <div className="flappy-score"><b>{view.score}</b><small>/ 10</small></div>
         </div>
       </div>
