@@ -529,7 +529,9 @@ function Level17B({ complete, reject }: LevelProps) {
   const birdY = useRef(150)
   const velocity = useRef(0)
   const score = useRef(0)
-  const running = useRef(true)
+  const running = useRef(false)
+  const started = useRef(false)
+  const crashed = useRef(false)
   const done = useRef(false)
   const pipes = useRef([
     { x: 520, gapY: 150, scored: false },
@@ -542,8 +544,9 @@ function Level17B({ complete, reject }: LevelProps) {
       { x: 765, gapY: 180, scored: false },
     ],
     score: 0,
+    started: false,
     crashed: false,
-    message: 'Tap, click, or press Space to flap.',
+    message: 'Tap, click, or press Space to begin.',
   })
 
   const nextGap = useCallback(() => 105 + Math.floor(Math.random() * 145), [])
@@ -557,7 +560,9 @@ function Level17B({ complete, reject }: LevelProps) {
     velocity.current = 0
     score.current = 0
     done.current = false
-    running.current = true
+    running.current = false
+    started.current = false
+    crashed.current = false
     pipes.current = [
       { x: 520, gapY: nextGap(), scored: false },
       { x: 765, gapY: nextGap(), scored: false },
@@ -566,15 +571,20 @@ function Level17B({ complete, reject }: LevelProps) {
       birdY: birdY.current,
       pipes: pipes.current,
       score: 0,
+      started: false,
       crashed: false,
-      message: 'Tap, click, or press Space to flap.',
+      message: 'Tap, click, or press Space to begin.',
     })
   }, [nextGap])
 
   const flap = useCallback(() => {
-    if (!running.current) {
+    if (crashed.current) {
       reset()
       return
+    }
+    if (!started.current) {
+      started.current = true
+      running.current = true
     }
     velocity.current = -4.9
   }, [reset])
@@ -609,11 +619,13 @@ function Level17B({ complete, reject }: LevelProps) {
         const hitWorld = birdY.current < 0 || birdY.current + birdSize > height
         if (hitPipe || hitWorld) {
           running.current = false
+          crashed.current = true
           const reached = score.current >= goal
           setView({
             birdY: birdY.current,
             pipes: pipes.current,
             score: score.current,
+            started: started.current,
             crashed: true,
             message: reached ? 'Flight accepted.' : 'Flight rejected. Resetting paperwork.',
           })
@@ -626,6 +638,7 @@ function Level17B({ complete, reject }: LevelProps) {
             birdY: birdY.current,
             pipes: pipes.current,
             score: score.current,
+            started: started.current,
             crashed: false,
             message: score.current >= goal - 2 ? 'Almost cleared. Keep the paperwork airborne.' : 'Tap, click, or press Space to flap.',
           })
@@ -661,6 +674,7 @@ function Level17B({ complete, reject }: LevelProps) {
         onPointerDown={flap}
       >
         <div className="flappy-sky" style={{ height: `${height}px` }}>
+          {!view.started && !view.crashed && <div className="flappy-start">Press Space or tap to start</div>}
           {view.pipes.map((pipe, i) => (
             <div className="flappy-pipe-pair" key={`${i}-${pipe.x}`} style={{ left: `${pipe.x}px` }}>
               <span className="pipe top" style={{ height: `${pipe.gapY - gap / 2}px` }} />
