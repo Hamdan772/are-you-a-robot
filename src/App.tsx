@@ -151,7 +151,7 @@ function App() {
         <CaseBadge index={index} total={levelRegistry.length} category={level.category} />
         <div className="level-stage">
           <Level complete={complete} reject={reject} />
-          <AnimatePresence>{verified && <motion.div className="verified-flash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><span>✓</span><b>Verified</b></motion.div>}</AnimatePresence>
+          <AnimatePresence>{verified && <motion.div className="verified-flash" initial={{ opacity: 0, scale: .96, y: 6 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .98, y: -4 }} transition={{ duration: .18 }}><span className="verified-icon" aria-hidden="true"><i /></span><b><strong>Verified</strong><small>Response accepted</small></b></motion.div>}</AnimatePresence>
         </div>
         <AnimatePresence>{notice && <motion.div role="alert" className="inline-error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><b>Verification unsuccessful.</b> {notice}</motion.div>}</AnimatePresence>
         {konamiEnabled && <button className="skip-question" onClick={skip}>Skip question</button>}
